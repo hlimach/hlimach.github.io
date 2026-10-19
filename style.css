@@ -1,0 +1,676 @@
+/* ==========================================================================
+   Haleema Ramzan — portfolio stylesheet
+
+   Structure
+     1. Fonts
+     2. Tokens        (colour, elevation, motion, type, space)
+     3. Base          (reset, typography, focus, scroll reveal, utilities)
+     4. Layout        (identity column, content, section nav, footer)
+     5. Components    (card, project, entry, logos, tags, chips, btn, clip)
+     6. Preferences   (reduced motion / transparency, more contrast)
+     7. Print
+
+   Theming: light tokens live on :root, dark overrides on
+   :root[data-theme="dark"]. The inline script in <head> sets data-theme
+   before first paint (saved choice, else the system setting); without
+   JavaScript the site stays light.
+
+   Motion: three transform channels never fight each other —
+     translate  scroll reveal         (.reveal)
+     transform  hover lift            (cards, logos)
+     scale      press feedback        (buttons, links)
+   ========================================================================== */
+
+@layer tokens, base, layout, components, preferences, print;
+
+/* ---------- 1. Fonts (Latin subsets, WOFF2) ------------------------------- */
+@font-face {
+  font-family: "Cyber Princess";
+  src: url("media/fonts/cyber-princess.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cyber Princess";
+  font-style: italic;
+  src: url("media/fonts/cyber-princess-italic.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Goldman";
+  font-weight: 700;
+  src: url("media/fonts/goldman-bold.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Space Grotesk";
+  font-weight: 300 700;
+  src: url("media/fonts/space-grotesk.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Source Code Pro";
+  font-weight: 500;
+  src: url("media/fonts/source-code-pro-medium.woff2") format("woff2");
+  font-display: swap;
+}
+
+/* ---------- 2. Tokens ----------------------------------------------------- */
+@layer tokens {
+  :root {
+    color-scheme: light;
+
+    /* Colour: cool neutrals with a trace of the original ink blue. The
+       accent is the only hue; it marks links, icons and active states. */
+    --bg: #f1f2f4;
+    --surface: #ffffff;
+    --text: #14171c;
+    --text-2: #3b414b;
+    --muted: #646a75;
+    --accent: #2f4e7a;
+    --fill: rgb(20 23 28 / .05);
+    --fill-strong: rgb(20 23 28 / .09);
+    --ring: rgb(20 23 28 / .06);
+    --material: rgb(241 242 244 / .72);
+    --material-raised: rgb(255 255 255 / .8);
+
+    /* Elevation: a hairline ring defines the edge, layered shade gives depth.
+       Bigger lift = longer, softer shadow. */
+    --shade: rgb(22 27 36 / .06);
+    --shade-deep: rgb(22 27 36 / .14);
+    --shadow-sm: 0 0 0 1px var(--ring), 0 1px 2px var(--shade);
+    --shadow: 0 0 0 1px var(--ring), 0 1px 2px var(--shade), 0 12px 32px -14px var(--shade-deep);
+    --shadow-lg: 0 0 0 1px var(--ring), 0 2px 6px var(--shade), 0 28px 56px -20px var(--shade-deep);
+
+    /* Motion: --ease approximates a critically damped spring (no overshoot),
+       --dur is its settle time. Press feedback answers faster still. */
+    --ease: cubic-bezier(.22, 1, .36, 1);
+    --dur: .45s;
+    --dur-reveal: .9s;
+    --dur-press: .12s;
+
+    /* Type */
+    --f-display: "Cyber Princess", system-ui, sans-serif;
+    --f-head: "Goldman", system-ui, sans-serif;
+    --f-body: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --f-mono: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    --fs-display: clamp(2.25rem, 1.7rem + 2.4vw, 3rem);
+    --fs-h2: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+    --fs-h3: clamp(1.0625rem, 1rem + .3vw, 1.25rem);
+    --fs-lead: clamp(1.125rem, 1.05rem + .4vw, 1.3125rem);
+    --fs-body: clamp(1rem, .96rem + .18vw, 1.0625rem);
+    --fs-small: .9375rem;
+    --fs-meta: .8125rem;
+    --fs-micro: .75rem;
+
+    /* Space + shape */
+    --gutter: 1rem;
+    --gap: clamp(1rem, .75rem + 1vw, 1.5rem);
+    --pad: clamp(1.25rem, 1rem + 1.2vw, 2rem);
+    --space-section: clamp(4.5rem, 3rem + 5vw, 7rem);
+    --measure: 56rem;
+    --nav-h: 4rem;
+    --r-lg: 1.375rem;
+    --r-md: .875rem;
+    --r-pill: 999px;
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #202329;
+    --surface: #2a2e35;
+    --text: #f1f2f4;
+    --text-2: #c5c9d0;
+    --muted: #9ca2ac;
+    --accent: #a7bde2;
+    --fill: rgb(255 255 255 / .07);
+    --fill-strong: rgb(255 255 255 / .12);
+    --ring: rgb(255 255 255 / .07);
+    --material: rgb(32 35 41 / .72);
+    --material-raised: rgb(54 58 66 / .8);
+    --shade: rgb(0 0 0 / .4);
+    --shade-deep: rgb(0 0 0 / .6);
+  }
+
+  @media (min-width: 40em) { :root { --gutter: 2.5rem; } }
+  @media (min-width: 64em) { :root { --gutter: clamp(2rem, 4.5vw, 4.5rem); } }
+}
+
+/* ---------- 3. Base ------------------------------------------------------- */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    scroll-padding-top: 1.5rem;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text-2);
+    font: 400 var(--fs-body) / 1.65 var(--f-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, p, ul, ol { margin: 0; }
+  ul, ol { padding: 0; }
+  h1, h2, h3 { color: var(--text); text-wrap: balance; }
+  p, li { text-wrap: pretty; }
+  img, video { display: block; max-width: 100%; height: auto; }
+  [hidden] { display: none !important; }
+
+  h2 {
+    margin-bottom: clamp(1.25rem, 1rem + 1vw, 2rem);
+    font: 400 var(--fs-h2) / 1.1 var(--f-display);
+    letter-spacing: .03em;
+  }
+  h3 { font: 700 var(--fs-h3) / 1.3 var(--f-head); }
+
+  a {
+    color: var(--accent);
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-color: color-mix(in srgb, currentColor 30%, transparent);
+    text-underline-offset: .22em;
+    transition: text-decoration-color .2s;
+  }
+  a:hover { text-decoration-color: currentColor; }
+  a, button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .icon {
+    flex: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .icon--solid { fill: currentColor; stroke: none; }
+
+  .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .skip {
+    position: absolute;
+    top: -4rem;
+    left: 1rem;
+    z-index: 20;
+    padding: .6rem 1rem;
+    border-radius: var(--r-pill);
+    background: var(--text);
+    color: var(--bg);
+    font-weight: 500;
+    text-decoration: none;
+  }
+  .skip:focus { top: 1rem; }
+
+  /* Scroll reveal. main.js adds .reveal only to content still below the
+     fold, so nothing is hidden without JavaScript or before first paint. */
+  .reveal {
+    transition: opacity var(--dur-reveal) var(--ease), translate var(--dur-reveal) var(--ease);
+  }
+  .reveal:not(.is-visible) { opacity: 0; translate: 0 1.5rem; }
+
+  /* Theme switch cross-fades instead of flashing (see main.js). */
+  ::view-transition-old(root),
+  ::view-transition-new(root) { animation-duration: .4s; }
+}
+
+/* ---------- 4. Layout (mobile first) -------------------------------------- */
+@layer layout {
+  /* Identity: centred header on phones, a row on tablets, a sticky column
+     beside the content on desktops. */
+  .side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 4.5rem var(--gutter) 0;
+    text-align: center;
+  }
+  .ident { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+  .avatar { width: 7rem; aspect-ratio: 1; }
+  .side h1 {
+    font: italic 400 var(--fs-display) / 1.05 var(--f-display);
+    letter-spacing: .06em;
+  }
+  .location {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    margin-top: .5rem;
+    color: var(--muted);
+    font: 500 var(--fs-meta) / 1.5 var(--f-mono);
+  }
+  .location .icon { width: .95rem; height: .95rem; }
+  .headline {
+    color: var(--text);
+    font: 700 clamp(1.0625rem, 1rem + .3vw, 1.1875rem) / 1.35 var(--f-head);
+  }
+  .bio { max-width: 42ch; color: var(--muted); }
+
+  /* Round icon links (social + theme) */
+  .links { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; }
+  .links :is(a, button) {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--fill);
+    color: var(--text);
+    cursor: pointer;
+    transition: background-color .2s, scale var(--dur-press) var(--ease);
+  }
+  .links :is(a, button):hover { background: var(--fill-strong); }
+  .links :is(a, button):active { scale: .92; }
+  .links .icon { width: 1.2rem; height: 1.2rem; }
+
+  .content { min-width: 0; }
+  main { padding: 2.5rem var(--gutter) 0; }
+  main > section + section { margin-top: var(--space-section); }
+
+  footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: .5rem 1.5rem;
+    padding: var(--space-section) var(--gutter) 2.5rem;
+    color: var(--muted);
+    font: 500 var(--fs-micro) / 1.5 var(--f-mono);
+  }
+  footer a {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    color: inherit;
+    text-decoration: none;
+    transition: color .2s;
+  }
+  footer a:hover { color: var(--text); }
+  footer .icon { width: .9rem; height: .9rem; }
+
+  /* Section nav links (shared by the dropdown and the desktop bar) */
+  .topnav { z-index: 10; }
+  .topnav ul { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: .25rem; }
+  .topnav a {
+    display: block;
+    padding: .55rem .9rem;
+    border-radius: var(--r-pill);
+    color: var(--text-2);
+    font: 500 var(--fs-meta) / 1.3 var(--f-mono);
+    text-decoration: none;
+    transition: background-color .2s, color .2s;
+  }
+  .topnav a:hover { background: var(--fill); color: var(--text); }
+  .topnav a[aria-current] { background: var(--fill-strong); color: var(--text); }
+  .menu-btn { display: none; }
+
+  /* Phones + tablets: one centred column; the nav is a floating menu. */
+  @media (max-width: 63.99em) {
+    .side, main, footer { max-width: var(--measure); margin-inline: auto; }
+
+    html:not(.js) .topnav { padding: 1.5rem var(--gutter) 0; }
+
+    .js .topnav { position: fixed; top: .75rem; right: .75rem; }
+    .js .menu-btn {
+      display: grid;
+      place-items: center;
+      width: 2.75rem;
+      height: 2.75rem;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: var(--material-raised);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      backdrop-filter: blur(20px) saturate(180%);
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: scale var(--dur-press) var(--ease);
+    }
+    .js .menu-btn:active { scale: .92; }
+
+    /* The dropdown grows out of the button's corner, and shrinks back into it. */
+    .js .topnav ul {
+      position: absolute;
+      top: calc(100% + .5rem);
+      right: 0;
+      flex-direction: column;
+      flex-wrap: nowrap;
+      gap: .125rem;
+      min-width: 12rem;
+      padding: .375rem;
+      border-radius: 1.125rem;
+      background: var(--material-raised);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      backdrop-filter: blur(20px) saturate(180%);
+      box-shadow: var(--shadow-lg);
+      transform-origin: top right;
+      opacity: 0;
+      scale: .9;
+      visibility: hidden;
+      transition: opacity .2s var(--ease), scale var(--dur) var(--ease), visibility 0s .2s;
+    }
+    .js .topnav.is-open ul {
+      opacity: 1;
+      scale: 1;
+      visibility: visible;
+      transition: opacity .2s var(--ease), scale var(--dur) var(--ease);
+    }
+    .js .topnav ul a { border-radius: .75rem; font-size: var(--fs-small); }
+  }
+
+  /* Tablets: photo beside the name, everything left-aligned. */
+  @media (min-width: 40em) and (max-width: 63.99em) {
+    .side { align-items: flex-start; padding-top: 3.5rem; text-align: left; }
+    .ident { flex-direction: row; gap: 1.5rem; }
+    .location, .links { justify-content: flex-start; }
+    .js .ident { padding-right: 3.5rem; } /* clear of the floating menu button */
+    .bio { max-width: 60ch; }
+  }
+
+  @media (min-width: 40em) {
+    .avatar { width: 8rem; }
+  }
+
+  /* Desktop: sticky identity column + content with a translucent nav bar. */
+  @media (min-width: 64em) {
+    html { scroll-padding-top: calc(var(--nav-h) + 1.5rem); }
+
+    .layout { display: grid; grid-template-columns: minmax(20rem, 30%) minmax(0, 1fr); }
+    .side {
+      position: sticky;
+      top: 0;
+      align-self: start;
+      justify-content: center;
+      gap: 1.5rem;
+      height: 100dvh;
+      padding: 2.5rem clamp(1.5rem, 3vw, 3rem);
+      overflow-y: auto;
+    }
+    .avatar { width: 10rem; }
+    .bio { max-width: 34ch; }
+
+    main, footer { max-width: var(--measure); }
+    main { padding-top: 2rem; }
+
+    .topnav {
+      position: sticky;
+      top: 0;
+      display: flex;
+      align-items: center;
+      height: var(--nav-h);
+      padding-inline: var(--gutter);
+      background: var(--material);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      backdrop-filter: blur(20px) saturate(180%);
+      transition: box-shadow var(--dur) var(--ease);
+    }
+    /* Scroll edge: a hairline appears only once content passes underneath. */
+    .topnav.is-scrolled { box-shadow: 0 1px 0 var(--ring); }
+    .topnav ul { justify-content: flex-start; margin-left: -.9rem; } /* first label aligns with the content edge */
+  }
+}
+
+/* ---------- 5. Components ------------------------------------------------- */
+@layer components {
+
+  /* ----- card: the one surface for every project, role and degree ------- */
+  .cards { list-style: none; display: grid; gap: var(--gap); }
+  .card {
+    padding: var(--pad);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    transition:
+      box-shadow var(--dur) var(--ease),
+      transform var(--dur) var(--ease),
+      opacity var(--dur-reveal) var(--ease),
+      translate var(--dur-reveal) var(--ease);
+  }
+  .card > * + * { margin-top: 1.125rem; }
+  .card > .more { margin-top: .375rem; }
+  @media (hover: hover) {
+    .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+  }
+  @media (min-width: 40em) {
+    .cards--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  /* ----- card header: eyebrow (place or dates), title, supporting line ---- */
+  .card-title { display: grid; gap: .375rem; }
+  .eyebrow {
+    color: var(--muted);
+    font: 500 var(--fs-micro) / 1.4 var(--f-mono);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .note { color: var(--muted); font-size: var(--fs-small); line-height: 1.5; }
+  .sub {
+    display: flex;
+    align-items: flex-start;
+    gap: .45rem;
+    color: var(--text-2);
+    font-size: var(--fs-small);
+    font-weight: 500;
+    line-height: 1.45;
+  }
+  .sub .icon { width: 1rem; height: 1rem; margin-top: .15rem; color: var(--muted); }
+
+  /* ----- project: media beside the header; links drop below on phones ---- */
+  .project-head {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+  }
+  .project-head .btn-row { grid-column: 1 / -1; }
+  .thumb {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: var(--r-md);
+    background: var(--fill);
+    outline: 1px solid var(--ring);
+    outline-offset: -1px;
+  }
+  @media (min-width: 40em) {
+    .project-head {
+      grid-template-columns: 10rem minmax(0, 1fr);
+      grid-template-rows: auto 1fr;
+      align-content: start;
+      gap: 1rem 1.75rem;
+    }
+    .project-head .thumb { grid-row: 1 / 3; }
+    .project-head .btn-row { grid-column: 2; }
+  }
+
+  /* ----- entry: icon tile beside a header (education) -------------------
+     The body starts flush with the top of the tile, so the card's vertical
+     rhythm (.card > * + *) is switched off for the two grid columns. */
+  .entry {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 1rem 1.25rem;
+    align-items: start;
+  }
+  .entry > * + * { margin-top: 0; }
+  .entry-body > * + * { margin-top: .75rem; }
+  .tile {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    aspect-ratio: 1;
+    border-radius: .75rem;
+    background: var(--fill);
+    color: var(--accent);
+  }
+  .tile .icon { width: 1.35rem; height: 1.35rem; }
+  .score {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .25rem .5rem;
+    color: var(--text);
+    font: 700 clamp(1.75rem, 1.5rem + 1vw, 2.25rem) / 1 var(--f-head);
+  }
+  .score small { color: var(--muted); font: 500 var(--fs-meta) / 1.3 var(--f-body); }
+
+  /* ----- logos (affiliations): original colours. Logos with dark text
+     ship a light-text twin; .on-light / .on-dark pick the one that reads
+     on the current theme. */
+  .logos {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.5rem clamp(2rem, 1.5rem + 2vw, 3rem);
+    margin-top: 2rem;
+  }
+  .logos a {
+    display: block;
+    border-radius: .5rem;
+    transition: transform var(--dur) var(--ease), scale var(--dur-press) var(--ease);
+  }
+  .logos a:hover { transform: translateY(-2px); }
+  .logos a:active { scale: .96; }
+  .logo {
+    --logo-h: clamp(2rem, 1.8rem + .8vw, 2.5rem);
+    width: auto;
+    height: var(--logo-h);
+  }
+  /* Optical balance: a solid wordmark reads larger than a mark with
+     built-in whitespace at the same height. */
+  .logo--wordmark { height: calc(var(--logo-h) * .75); }
+  .logo--airy { height: calc(var(--logo-h) * 1.3); }
+
+  .on-dark,
+  :root[data-theme="dark"] .on-light { display: none; }
+  :root[data-theme="dark"] .on-dark { display: block; }
+
+  /* ----- running text --------------------------------------------------- */
+  .prose p + p { margin-top: 1.125rem; }
+  .prose .lead { color: var(--text); font-size: var(--fs-lead); line-height: 1.55; }
+
+  .bullets { padding-left: 1.125rem; }
+  .bullets li + li { margin-top: .5rem; }
+  .bullets li { padding-left: .25rem; }
+  .bullets li::marker { color: var(--muted); }
+
+  /* ----- tags (technologies) and chips (focus areas) -------------------- */
+  .tags, .chips { list-style: none; display: flex; flex-wrap: wrap; gap: .375rem; }
+  .tags li {
+    padding: .3rem .7rem;
+    border-radius: var(--r-pill);
+    background: var(--fill);
+    color: var(--text-2);
+    font: 500 var(--fs-micro) / 1.3 var(--f-mono);
+  }
+  .chips { gap: .5rem; margin-top: 1.75rem; }
+  .chips li {
+    padding: .45rem 1rem;
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    color: var(--text);
+    font-size: var(--fs-small);
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  /* ----- btn: pill link (Code, Report, Presentation) --------------------- */
+  .btn-row { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    min-height: 2.25rem;
+    padding: 0 .95rem;
+    border-radius: var(--r-pill);
+    background: var(--fill);
+    color: var(--text);
+    font: 500 var(--fs-meta) / 1 var(--f-mono);
+    text-decoration: none;
+    transition: background-color .2s, scale var(--dur-press) var(--ease);
+  }
+  .btn .icon { width: 1rem; height: 1rem; color: var(--accent); }
+  .btn:hover { background: var(--fill-strong); }
+  .btn:active { scale: .96; }
+
+  /* ----- clip: long text collapsed behind a "Read more" button ---------- */
+  .clip > * + * { margin-top: .875rem; }
+  .js .clip { overflow: hidden; }
+  .js .clip:not(.is-open, .is-short) {
+    max-height: 9.5rem;
+    -webkit-mask-image: linear-gradient(#000 45%, transparent);
+    mask-image: linear-gradient(#000 45%, transparent);
+  }
+  .more {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 2.25rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font-size: var(--fs-small);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .more:hover span { text-decoration: underline; text-underline-offset: .22em; }
+  .more .icon { width: 1rem; height: 1rem; transition: rotate var(--dur) var(--ease); }
+  .more[aria-expanded="true"] .icon { rotate: 180deg; }
+}
+
+/* ---------- 6. Preferences ------------------------------------------------ */
+@layer preferences {
+  /* Keep the fades that aid comprehension, drop the travel. */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .reveal:not(.is-visible) { translate: none; }
+    .card:hover, .logos a:hover { transform: none; }
+    .topnav ul { scale: none; }
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    :root { --material: var(--bg); --material-raised: var(--surface); }
+    .topnav, .topnav ul, .menu-btn { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  }
+
+  @media (prefers-contrast: more) {
+    :root { --muted: var(--text-2); --ring: rgb(20 23 28 / .45); --fill: rgb(20 23 28 / .1); }
+    :root[data-theme="dark"] { --ring: rgb(255 255 255 / .5); --fill: rgb(255 255 255 / .14); }
+  }
+}
+
+/* ---------- 7. Print ------------------------------------------------------ */
+@layer print {
+  @media print {
+    :root { color-scheme: light; }
+    .topnav, .links, .skip, .more, .btn-row, footer a { display: none; }
+    .side { position: static; height: auto; }
+    .js .clip { max-height: none; -webkit-mask-image: none; mask-image: none; }
+    .reveal { opacity: 1; translate: none; }
+    .card { break-inside: avoid; box-shadow: 0 0 0 1px #ccc; }
+  }
+}
